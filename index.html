@@ -6,56 +6,73 @@
     <title>飲料點餐系統 - 福瑞斯特版</title>
     <style>
         :root { --primary-color: #4a90e2; --bg-color: #f4f7f6; }
-        body { font-family: "Microsoft JhengHei", sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; padding: 20px; margin: 0; }
-        .container { background: white; width: 100%; max-width: 500px; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 10px solid var(--primary-color); }
+        body { font-family: "Microsoft JhengHei", sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; padding: 15px; margin: 0; }
+        .container { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 10px solid var(--primary-color); box-sizing: border-box; }
         
-        .header { text-align: center; margin-bottom: 20px; }
-        .header h1 { color: var(--primary-color); margin: 10px 0; font-size: 24px; }
-        .header p { color: #666; font-size: 14px; line-height: 1.6; }
+        .header { text-align: center; margin-bottom: 15px; }
+        .header h1 { color: var(--primary-color); margin: 5px 0; font-size: 22px; }
+        .header p { color: #666; font-size: 13px; line-height: 1.5; margin: 5px 0; }
 
-        .menu-preview { border: 2px dashed #ddd; padding: 10px; border-radius: 10px; margin-bottom: 25px; background: #fafafa; }
-        .menu-title { text-align: center; font-weight: bold; margin-bottom: 10px; color: #444; }
-        .menu-preview img { width: 100%; border-radius: 5px; display: block; min-height: 200px; object-fit: contain; background: #eee; }
+        /* 菜單預覽區優化 */
+        .menu-preview { border: 2px dashed #ddd; padding: 8px; border-radius: 10px; margin-bottom: 20px; background: #fafafa; text-align: center; }
+        .menu-title { font-weight: bold; margin-bottom: 8px; color: #444; font-size: 15px; }
+        
+        /* 讓圖片寬度撐滿，高度自動 */
+        .menu-preview img { 
+            width: 100%; 
+            height: auto; 
+            border-radius: 5px; 
+            display: block; 
+            cursor: zoom-in; /* 提示可以點擊 */
+            transition: 0.2s;
+        }
+        .menu-preview img:active { opacity: 0.8; }
+        .zoom-tip { font-size: 11px; color: #4a90e2; margin-top: 5px; font-weight: bold; }
 
-        .form-group { margin-bottom: 18px; }
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        input:focus { border-color: var(--primary-color); outline: none; box-shadow: 0 0 5px rgba(74,144,226,0.3); }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; font-size: 15px; }
+        input, textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; -webkit-appearance: none; }
+        input:focus { border-color: var(--primary-color); outline: none; }
 
-        .btn-submit { width: 100%; padding: 16px; background-color: var(--primary-color); color: white; border: none; border-radius: 10px; font-size: 18px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 10px; }
+        .btn-submit { width: 100%; padding: 16px; background-color: var(--primary-color); color: white; border: none; border-radius: 10px; font-size: 18px; cursor: pointer; font-weight: bold; transition: 0.3s; margin-top: 5px; }
         .btn-submit:hover { background-color: #357abd; }
-        .btn-submit:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn-submit:disabled { background-color: #ccc; }
 
-        .footer-note { text-align: center; color: #999; font-size: 12px; margin-top: 20px; }
+        .footer-note { text-align: center; color: #999; font-size: 11px; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>🥤 今日飲料點餐訂購單</h1>
-        <p>親愛的同仁您好：<br>請參考下方菜單填寫您想喝的飲料，系統將自動彙整至後台統計。</p>
+        <h1>🥤 飲料點餐訂購單</h1>
+        <p>請點擊下方菜單查看大圖縮放<br>填寫完畢後按下送出即可。</p>
     </div>
 
     <div class="menu-preview">
-        <div class="menu-title">📅 <span id="currentStore">讀取中...</span> 菜單預覽</div>
-        <img id="menuImg" src="" alt="請稍候，正在載入菜單...">
+        <div class="menu-title">📅 今日店家：<span id="currentStore">載入中...</span></div>
+        
+        <a id="menuLink" href="#" target="_blank">
+            <img id="menuImg" src="" alt="正在載入菜單圖檔...">
+        </a>
+        
+        <div class="zoom-tip">🔍 點擊圖片可開啟大圖縮放</div>
     </div>
 
     <form id="orderForm">
         <div class="form-group">
             <label>姓名：</label>
-            <input type="text" id="name" required placeholder="請輸入您的姓名">
+            <input type="text" id="name" required placeholder="您的名字">
         </div>
 
         <div class="form-group">
             <label>飲料品項：</label>
-            <input type="text" id="drink" required placeholder="例如：珍珠奶茶 大杯">
+            <input type="text" id="drink" required placeholder="例如：拿鐵咖啡 大杯">
         </div>
 
         <div class="form-group">
             <label>糖度冰塊：</label>
-            <input type="text" id="sugar_ice" required placeholder="例如：微糖微冰">
+            <input type="text" id="sugar_ice" required placeholder="例如：半糖少冰">
         </div>
 
         <div class="form-group">
@@ -70,27 +87,29 @@
 </div>
 
 <script>
-    // ⚠️ 請在這裡貼上你從 Google Apps Script 部署得到的網址
+    // ⚠️ 請修改此處為你的 Google Apps Script 網址
     const scriptURL = 'https://script.google.com/macros/s/AKfycbyCcLr8y-IpNqPgC4EHRzvnA8ySHzr_TL820GO_TbkazuCdQ3aEeA0cuZr40CwNgqX2zw/exec';
 
-    // 1. 自動偵測今天要顯示哪張圖片
     window.onload = function() {
         fetch(scriptURL)
             .then(response => response.text())
             .then(storeName => {
                 const cleanName = storeName.trim();
                 document.getElementById('currentStore').innerText = cleanName;
-                // 這裡會自動去找你 GitHub 上傳的圖片，例如 "50嵐.png" 或 "麻古.png"
-                // 如果你的檔案都是 .jpg，請把下面的 .png 改成 .jpg
-                document.getElementById('menuImg').src = encodeURIComponent(cleanName) + ".jpg";
+                
+                // 設定圖片路徑，假設圖片都在 GitHub 跟目錄，且為 .png
+                // 如果你的圖片是 .jpg，請將下方的 .png 改成 .jpg
+                const imgPath = encodeURIComponent(cleanName) + ".png";
+                
+                document.getElementById('menuImg').src = imgPath;
+                document.getElementById('menuLink').href = imgPath; // 讓點擊連結也指向這張圖
             })
             .catch(err => {
-                console.error('無法取得店家資訊', err);
                 document.getElementById('currentStore').innerText = "載入失敗";
+                console.error(err);
             });
     };
 
-    // 2. 傳送資料到 Google 試算表
     function sendData() {
         const btn = document.getElementById('submitBtn');
         const name = document.getElementById('name').value;
@@ -99,7 +118,7 @@
         const note = document.getElementById('note').value;
 
         if (!name || !drink || !sugar_ice) {
-            alert('請填寫完整資訊喔！');
+            alert('請填寫完整資訊！');
             return;
         }
 
@@ -124,7 +143,7 @@
             btn.innerText = "確認送出點餐";
         })
         .catch(error => {
-            alert('哎呀，出錯了：' + error.message);
+            alert('送出失敗，請檢查網路連接：' + error.message);
             btn.disabled = false;
             btn.innerText = "重新送出";
         });
