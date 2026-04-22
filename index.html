@@ -3,15 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>飲料點餐系統 - 福瑞斯特版</title>
+    <title>飲料點餐系統 - 倒數版</title>
     <style>
-        :root { --primary-color: #4a90e2; --bg-color: #f4f7f6; }
+        :root { --primary-color: #4a90e2; --bg-color: #f4f7f6; --danger-color: #e74c3c; }
         body { font-family: "Microsoft JhengHei", sans-serif; background-color: var(--bg-color); display: flex; justify-content: center; padding: 15px; margin: 0; }
         .container { background: white; width: 100%; max-width: 500px; padding: 20px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 10px solid var(--primary-color); box-sizing: border-box; }
         .header { text-align: center; margin-bottom: 15px; }
         .header h1 { color: var(--primary-color); margin: 5px 0; font-size: 22px; }
-        .deadline-box { color: #e74c3c; font-weight: bold; text-align: center; font-size: 14px; margin-bottom: 10px; }
         
+        /* 倒數計時與截止時間樣式 */
+        .deadline-box { background: #fff0f0; border: 1px solid #ffcccc; padding: 10px; border-radius: 10px; margin-bottom: 15px; }
+        .deadline-text { color: #555; font-size: 14px; font-weight: bold; }
+        #countdown { color: var(--danger-color); font-size: 20px; font-weight: 900; display: block; margin-top: 5px; }
+
         .menu-preview { border: 2px dashed #ddd; padding: 8px; border-radius: 10px; margin-bottom: 20px; background: #fafafa; text-align: center; }
         .menu-title { font-weight: bold; margin-bottom: 8px; color: #444; font-size: 15px; }
         .menu-preview img { width: 100%; height: auto; border-radius: 5px; display: block; cursor: zoom-in; }
@@ -31,7 +35,10 @@
 <div class="container">
     <div class="header">
         <h1>🥤 飲料點餐訂購單</h1>
-        <div class="deadline-box">⏳ 今日點餐截止時間：<span id="deadlineDisplay">載入中...</span></div>
+        <div class="deadline-box">
+            <span class="deadline-text">⏳ 今日截止時間：<span id="deadlineDisplay">載入中...</span></span>
+            <span id="countdown">正在計算剩餘時間...</span>
+        </div>
     </div>
 
     <div class="menu-preview">
@@ -44,17 +51,17 @@
 
     <form id="orderForm">
         <div class="form-group"><label>姓名：</label><input type="text" id="name" required placeholder="您的名字"></div>
-        <div class="form-group"><label>飲料品項：</label><input type="text" id="drink" required placeholder="例如：拿鐵咖啡 大杯"></div>
-        <div class="form-group"><label>糖度冰塊：</label><input type="text" id="sugar_ice" required placeholder="例如：半糖少冰"></div>
-        <div class="form-group"><label>備註事項：</label><textarea id="note" rows="2" placeholder="加料或特殊需求（選填）"></textarea></div>
+        <div class="form-group"><label>飲料品項：</label><input type="text" id="drink" required placeholder="例如：珍珠奶茶 大杯"></div>
+        <div class="form-group"><label>糖度冰塊：</label><input type="text" id="sugar_ice" required placeholder="例如：微糖微冰"></div>
+        <div class="form-group"><label>備註事項：</label><textarea id="note" rows="2" placeholder="加料或特殊需求"></textarea></div>
         <button type="button" id="submitBtn" onclick="sendData()">確認送出點餐</button>
     </form>
-    <div class="footer-note">系統由 TATA 點餐助手驅動</div>
+    <div class="footer-note">系統由 TATA 點餐助手所編輯</div>
 </div>
 
 <script>
-    // ⚠️ 請修改為你的新版 GAS 網址
-    const scriptURL = 'https://script.google.com/macros/s/AKfycbyCcLr8y-IpNqPgC4EHRzvnA8ySHzr_TL820GO_TbkazuCdQ3aEeA0cuZr40CwNgqX2zw/exec';
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbyCcLr8y-IpNqPgC4EHRzvnA8ySHzr_TL820GO_TbkazuCdQ3aEeA0cuZr40CwNgqX2zw/exec'; // <--- 記得換成你的網址
+    let targetTime = null;
 
     window.onload = function() {
         fetch(scriptURL)
@@ -62,20 +69,50 @@
             .then(data => {
                 const parts = data.split(","); 
                 const storeName = parts[0] ? parts[0].trim() : "未設定";
-                const deadline = parts[1] ? parts[1].trim() : "未設定";
+                const deadlineStr = parts[1] ? parts[1].trim() : "14:00";
 
                 document.getElementById('currentStore').innerText = storeName;
-                document.getElementById('deadlineDisplay').innerText = deadline;
+                document.getElementById('deadlineDisplay').innerText = deadlineStr;
 
-                // 根據店名抓取 .jpg 圖片 (與你 GitHub 上的 COCO.jpg, 50嵐.jpg 一致)
+                // 設定倒數目標
+                const [hours, minutes] = deadlineStr.split(":");
+                targetTime = new Date();
+                targetTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+                // 啟動倒數計時器
+                startCountdown();
+
                 const imgPath = "./" + encodeURIComponent(storeName) + ".jpg";
                 document.getElementById('menuImg').src = imgPath;
                 document.getElementById('menuLink').href = imgPath;
-            })
-            .catch(err => console.error(err));
+            });
     };
 
+    function startCountdown() {
+        const countdownEl = document.getElementById('countdown');
+        
+        const timer = setInterval(() => {
+            const now = new Date();
+            const diff = targetTime - now;
+
+            if (diff <= 0) {
+                clearInterval(timer);
+                countdownEl.innerText = "🚨 點餐已截止囉！";
+                document.getElementById('submitBtn').disabled = true;
+                document.getElementById('submitBtn').innerText = "已截止送出";
+                return;
+            }
+
+            const h = Math.floor(diff / 1000 / 60 / 60);
+            const m = Math.floor((diff / 1000 / 60) % 60);
+            const s = Math.floor((diff / 1000) % 60);
+
+            countdownEl.innerText = `⏳ 剩餘點餐時間：${h}時${m}分${s}秒`;
+        }, 1000);
+    }
+
     function sendData() {
+        // ... (這部分的 sendData 代碼跟之前一樣，保持不變)
         const btn = document.getElementById('submitBtn');
         const formData = new URLSearchParams();
         formData.append('name', document.getElementById('name').value);
@@ -96,10 +133,8 @@
             if (result === "成功") {
                 alert('🎉 點餐成功！');
                 document.getElementById('orderForm').reset();
-            } else if (result === "截止") {
-                alert('抱歉！時間已經超過截止時間，無法點餐囉。');
             } else {
-                alert(result);
+                alert('抱歉！時間已經截止囉。');
             }
             btn.disabled = false;
             btn.innerText = "確認送出點餐";
