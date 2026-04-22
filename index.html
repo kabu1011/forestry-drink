@@ -82,7 +82,7 @@
                 document.getElementById('currentStore').innerText = cleanName;
                 // 這裡會自動去找你 GitHub 上傳的圖片，例如 "50嵐.png" 或 "麻古.png"
                 // 如果你的檔案都是 .jpg，請把下面的 .png 改成 .jpg
-                document.getElementById('menuImg').src = encodeURIComponent(cleanName) + ".png";
+                document.getElementById('menuImg').src = encodeURIComponent(cleanName) + ".jpg";
             })
             .catch(err => {
                 console.error('無法取得店家資訊', err);
